@@ -6,6 +6,7 @@ import type {
   InquiryListParams,
   PageResponse,
   ReorderItem,
+  HardDeleteRequest,
 } from "@/types/inquiry";
 
 const api = axios.create({
@@ -19,6 +20,10 @@ export const inquiryApi = {
       Object.entries(params).filter(([, v]) => v !== null && v !== undefined && v !== "")
     );
     return api.get("/api/inquiries", { params: cleaned }).then((r) => r.data);
+  },
+
+  history(): Promise<Inquiry[]> {
+    return api.get("/api/inquiries/history").then((r) => r.data);
   },
 
   get(id: number): Promise<Inquiry> {
@@ -41,7 +46,11 @@ export const inquiryApi = {
     return api.patch("/api/inquiries/reorder", { items }).then(() => undefined);
   },
 
-  delete(id: number): Promise<void> {
+  softDelete(id: number): Promise<void> {
     return api.delete(`/api/inquiries/${id}`).then(() => undefined);
+  },
+
+  hardDelete(id: number, data: HardDeleteRequest): Promise<void> {
+    return api.delete(`/api/inquiries/${id}/permanent`, { data }).then(() => undefined);
   },
 };

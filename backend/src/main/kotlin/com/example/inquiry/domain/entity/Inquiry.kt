@@ -5,11 +5,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 enum class InquiryStatus {
-    PENDING, IN_PROGRESS, COMPLETED
-}
-
-enum class InquiryPriority {
-    HIGH, MEDIUM, LOW
+    PENDING, IN_PROGRESS, WAITING_REPLY, COMPLETED
 }
 
 @Entity
@@ -25,8 +21,20 @@ class Inquiry(
     @Column(nullable = false, columnDefinition = "TEXT")
     var content: String,
 
-    @Column(name = "requester_name", nullable = false, length = 50)
-    var requesterName: String,
+    @Column(columnDefinition = "TEXT")
+    var memo: String? = null,
+
+    @Column(name = "customer_name", nullable = false, length = 50)
+    var customerName: String,
+
+    @Column(name = "customer_name_kana", length = 100)
+    var customerNameKana: String? = null,
+
+    @Column(name = "assignee_name", nullable = false, length = 50)
+    var assigneeName: String = "",
+
+    @Column(name = "assignee_name_kana", length = 100)
+    var assigneeNameKana: String? = null,
 
     @Column(name = "requester_email", nullable = false)
     var requesterEmail: String,
@@ -34,10 +42,6 @@ class Inquiry(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var status: InquiryStatus = InquiryStatus.PENDING,
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    var priority: InquiryPriority = InquiryPriority.MEDIUM,
 
     @Column(name = "due_date")
     var dueDate: LocalDate? = null,
@@ -49,7 +53,10 @@ class Inquiry(
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: LocalDateTime = LocalDateTime.now()
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
+
+    @Column(name = "deleted_at")
+    var deletedAt: LocalDateTime? = null
 ) {
     @PreUpdate
     fun onUpdate() {

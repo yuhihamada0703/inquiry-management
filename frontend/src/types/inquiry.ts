@@ -1,18 +1,21 @@
-export type InquiryStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED";
-export type InquiryPriority = "HIGH" | "MEDIUM" | "LOW";
+export type InquiryStatus = "PENDING" | "IN_PROGRESS" | "WAITING_REPLY" | "COMPLETED";
 
 export interface Inquiry {
   id: number;
   title: string;
   content: string;
-  requesterName: string;
+  memo: string | null;
+  customerName: string;
+  customerNameKana: string | null;
+  assigneeName: string;
+  assigneeNameKana: string | null;
   requesterEmail: string;
   status: InquiryStatus;
-  priority: InquiryPriority;
   dueDate: string | null;
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string | null;
 }
 
 export interface PageResponse<T> {
@@ -26,20 +29,30 @@ export interface PageResponse<T> {
 export interface InquiryCreateRequest {
   title: string;
   content: string;
-  requesterName: string;
+  memo?: string | null;
+  customerName: string;
+  customerNameKana?: string;
+  assigneeName?: string;
+  assigneeNameKana?: string;
   requesterEmail: string;
-  priority: InquiryPriority;
   dueDate?: string | null;
 }
 
 export interface InquiryUpdateRequest {
   title: string;
   content: string;
-  requesterName: string;
+  memo?: string | null;
+  customerName: string;
+  customerNameKana?: string;
+  assigneeName?: string;
+  assigneeNameKana?: string;
   requesterEmail: string;
   status: InquiryStatus;
-  priority: InquiryPriority;
   dueDate?: string | null;
+}
+
+export interface HardDeleteRequest {
+  adminPassword: string;
 }
 
 export interface ReorderItem {
@@ -49,7 +62,6 @@ export interface ReorderItem {
 
 export interface InquiryListParams {
   status?: InquiryStatus | null;
-  priority?: InquiryPriority | null;
   keyword?: string;
   sort?: string;
   direction?: "asc" | "desc";
@@ -60,11 +72,6 @@ export interface InquiryListParams {
 export const STATUS_LABELS: Record<InquiryStatus, string> = {
   PENDING: "未対応",
   IN_PROGRESS: "対応中",
+  WAITING_REPLY: "回答待ち",
   COMPLETED: "完了",
-};
-
-export const PRIORITY_LABELS: Record<InquiryPriority, string> = {
-  HIGH: "高",
-  MEDIUM: "中",
-  LOW: "低",
 };
