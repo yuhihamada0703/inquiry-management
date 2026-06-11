@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: inquiry-db
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: inquiry_db
+      MYSQL_USER: inquiry_user
+      MYSQL_PASSWORD: inquiry_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    # ローカル: docker compose up でビルド / 本番: BACKEND_IMAGE に ghcr.io イメージを指定して --pull always で起動
+    image: ${BACKEND_IMAGE:-inquiry-backend:latest}
+    build: ./backend
+    container_name: inquiry-backend
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-inquiry_db}
+      DB_USER: ${DB_USER:-inquiry_user}
+      DB_PASSWORD: ${DB_PASSWORD:-inquiry_pass}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
