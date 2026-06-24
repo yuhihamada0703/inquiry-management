@@ -2,7 +2,6 @@ package com.example.inquiry.presentation.controller
 
 import com.example.inquiry.application.dto.*
 import com.example.inquiry.application.service.InquiryService
-import com.example.inquiry.domain.entity.InquiryPriority
 import com.example.inquiry.domain.entity.InquiryStatus
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -15,14 +14,17 @@ class InquiryController(private val service: InquiryService) {
     @GetMapping
     fun findAll(
         @RequestParam(required = false) status: InquiryStatus?,
-        @RequestParam(required = false) priority: InquiryPriority?,
         @RequestParam(required = false) keyword: String?,
         @RequestParam(defaultValue = "createdAt") sort: String,
         @RequestParam(defaultValue = "desc") direction: String,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
     ): PageResponse<InquiryResponse> =
-        service.findAll(status, priority, keyword, sort, direction, page, size)
+        service.findAll(status, keyword, sort, direction, page, size)
+
+    @GetMapping("/history")
+    fun findHistory(): List<InquiryResponse> =
+        service.findHistory()
 
     @GetMapping("/{id}")
     fun findById(@PathVariable id: Long): InquiryResponse =
@@ -49,5 +51,10 @@ class InquiryController(private val service: InquiryService) {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(@PathVariable id: Long) =
-        service.delete(id)
+        service.softDelete(id)
+
+    @DeleteMapping("/{id}/permanent")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun hardDelete(@PathVariable id: Long, @RequestBody request: HardDeleteRequest) =
+        service.hardDelete(id, request)
 }

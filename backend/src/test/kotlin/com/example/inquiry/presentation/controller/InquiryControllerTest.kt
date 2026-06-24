@@ -2,36 +2,37 @@ package com.example.inquiry.presentation.controller
 
 import com.example.inquiry.application.dto.*
 import com.example.inquiry.application.service.InquiryService
-import com.example.inquiry.domain.entity.InquiryPriority
 import com.example.inquiry.domain.entity.InquiryStatus
-import com.example.inquiry.presentation.advice.GlobalExceptionHandler
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.Mock
-import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
-import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.web.context.WebApplicationContext
 import java.time.LocalDateTime
 
-@ExtendWith(MockitoExtension::class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@ActiveProfiles("test")
 class InquiryControllerTest {
 
-    @Mock private lateinit var service: InquiryService
+    @Autowired private lateinit var webApplicationContext: WebApplicationContext
+
+    @MockitoBean private lateinit var service: InquiryService
+
     private lateinit var mockMvc: MockMvc
 
     @BeforeEach
     fun setUp() {
         mockMvc = MockMvcBuilders
-            .standaloneSetup(InquiryController(service))
-            .setControllerAdvice(GlobalExceptionHandler())
-            .setMessageConverters(JacksonJsonHttpMessageConverter())
+            .webAppContextSetup(webApplicationContext)
             .build()
     }
 
@@ -39,14 +40,18 @@ class InquiryControllerTest {
         id = 1L,
         title = "テスト問い合わせ",
         content = "テスト内容",
-        requesterName = "山田太郎",
+        memo = null,
+        customerName = "山田太郎",
+        customerNameKana = null,
+        assigneeName = "田中担当",
+        assigneeNameKana = null,
         requesterEmail = "yamada@example.com",
         status = InquiryStatus.PENDING,
-        priority = InquiryPriority.MEDIUM,
         dueDate = null,
         displayOrder = 0,
         createdAt = LocalDateTime.of(2026, 1, 1, 0, 0),
-        updatedAt = LocalDateTime.of(2026, 1, 1, 0, 0)
+        updatedAt = LocalDateTime.of(2026, 1, 1, 0, 0),
+        deletedAt = null
     )
 
     private fun samplePageResponse() = PageResponse(
@@ -59,7 +64,7 @@ class InquiryControllerTest {
 
     @Test
     fun `GET inquiries returns 200 with page response`() {
-        whenever(service.findAll(null, null, null, "createdAt", "desc", 0, 20))
+        whenever(service.findAll(null, null, "createdAt", "desc", 0, 20))
             .thenReturn(samplePageResponse())
 
         mockMvc.perform(get("/api/inquiries"))
@@ -100,9 +105,9 @@ class InquiryControllerTest {
                     {
                         "title": "新規問い合わせ",
                         "content": "お問い合わせ内容",
-                        "requesterName": "山田太郎",
-                        "requesterEmail": "yamada@example.com",
-                        "priority": "MEDIUM"
+                        "customerName": "山田太郎",
+                        "assigneeName": "",
+                        "requesterEmail": "yamada@example.com"
                     }
                     """.trimIndent()
                 )
@@ -121,9 +126,9 @@ class InquiryControllerTest {
                     {
                         "title": "",
                         "content": "内容",
-                        "requesterName": "山田",
-                        "requesterEmail": "yamada@example.com",
-                        "priority": "MEDIUM"
+                        "customerName": "山田",
+                        "assigneeName": "",
+                        "requesterEmail": "yamada@example.com"
                     }
                     """.trimIndent()
                 )
@@ -141,9 +146,9 @@ class InquiryControllerTest {
                     {
                         "title": "タイトル",
                         "content": "内容",
-                        "requesterName": "山田",
-                        "requesterEmail": "not-an-email",
-                        "priority": "MEDIUM"
+                        "customerName": "山田",
+                        "assigneeName": "",
+                        "requesterEmail": "not-an-email"
                     }
                     """.trimIndent()
                 )
@@ -166,7 +171,7 @@ class InquiryControllerTest {
 
     @Test
     fun `DELETE inquiry returns 204`() {
-        doNothing().whenever(service).delete(1L)
+        doNothing().whenever(service).softDelete(1L)
 
         mockMvc.perform(delete("/api/inquiries/1"))
             .andExpect(status().isNoContent)

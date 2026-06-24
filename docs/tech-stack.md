@@ -4,7 +4,7 @@
 
 | 技術 | バージョン | 用途 |
 |------|-----------|------|
-| Next.js | 14.x (App Router) | フレームワーク |
+| Next.js | 15.x (App Router) | フレームワーク |
 | TypeScript | 5.x | 型安全な開発 |
 | TailwindCSS | 3.x | スタイリング |
 | shadcn/ui | latest | UIコンポーネント |
@@ -18,13 +18,13 @@
 
 | 技術 | バージョン | 用途 |
 |------|-----------|------|
-| Kotlin | 1.9.x | メイン言語 |
-| Spring Boot | 3.2.x | フレームワーク |
+| Kotlin | 2.x | メイン言語 |
+| Spring Boot | 4.x | フレームワーク |
 | Spring Data JPA | - | ORM |
 | Spring Web MVC | - | REST API |
 | Spring Validation | - | バリデーション |
 | MySQL Connector | 8.x | DBドライバ |
-| Flyway | 9.x | DBマイグレーション |
+| Flyway | 10.x | DBマイグレーション |
 
 ## データベース
 
@@ -53,4 +53,14 @@
 
 | ツール | 用途 |
 |--------|------|
-| GitHub Actions | ビルド・テスト自動化（将来） |
+| GitHub Actions | PR・push 時にテスト・ビルド・デプロイを自動化 |
+| GHCR (GitHub Container Registry) | バックエンド Docker イメージの保管 |
+
+### パイプライン概要
+
+| ジョブ | トリガー | 内容 |
+|-------|---------|------|
+| Backend Test | PR / push | Gradle テスト（H2 インメモリ DB） |
+| Frontend Test & Build | PR / push | ESLint + Jest + Next.js ビルド確認 |
+| Build & Push | main push のみ | Docker イメージビルド → GHCR へ push |
+| Deploy to Production | main push のみ | SSH で EC2 へデプロイ（docker compose 更新） |

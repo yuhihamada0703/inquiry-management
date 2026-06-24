@@ -2,7 +2,6 @@ package com.example.inquiry.application.service
 
 import com.example.inquiry.application.dto.*
 import com.example.inquiry.domain.entity.Inquiry
-import com.example.inquiry.domain.entity.InquiryPriority
 import com.example.inquiry.domain.entity.InquiryStatus
 import com.example.inquiry.domain.repository.InquiryRepository
 import jakarta.persistence.EntityNotFoundException
@@ -10,17 +9,19 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
+import org.springframework.web.server.ResponseStatusException
 import java.util.Optional
 
 @ExtendWith(MockitoExtension::class)
 class InquiryServiceTest {
 
     @Mock private lateinit var repository: InquiryRepository
-    @InjectMocks private lateinit var service: InquiryService
+
+    private val adminPassword = "admin1234"
+    private val service by lazy { InquiryService(repository, adminPassword) }
 
     private fun sampleInquiry(
         id: Long = 1L,
@@ -30,9 +31,9 @@ class InquiryServiceTest {
         id = id,
         title = "テストタイトル",
         content = "テスト内容",
-        requesterName = "山田太郎",
+        customerName = "山田太郎",
         requesterEmail = "yamada@example.com",
-        priority = InquiryPriority.MEDIUM,
+        assigneeName = "田中担当",
         displayOrder = displayOrder,
         status = status
     )
@@ -58,7 +59,7 @@ class InquiryServiceTest {
 
     @Test
     fun `create assigns displayOrder as max plus one`() {
-        whenever(repository.findByStatusOrderByDisplayOrderAsc(InquiryStatus.PENDING))
+        whenever(repository.findActiveByStatus(InquiryStatus.PENDING))
             .thenReturn(listOf(sampleInquiry(displayOrder = 0), sampleInquiry(displayOrder = 3)))
         whenever(repository.save(any())).thenAnswer { it.getArgument<Inquiry>(0) }
 
@@ -66,9 +67,8 @@ class InquiryServiceTest {
             InquiryCreateRequest(
                 title = "新規問い合わせ",
                 content = "内容",
-                requesterName = "田中",
-                requesterEmail = "tanaka@example.com",
-                priority = InquiryPriority.LOW
+                customerName = "田中",
+                requesterEmail = "tanaka@example.com"
             )
         )
 
@@ -79,7 +79,7 @@ class InquiryServiceTest {
 
     @Test
     fun `create assigns displayOrder 0 when no existing inquiries`() {
-        whenever(repository.findByStatusOrderByDisplayOrderAsc(InquiryStatus.PENDING))
+        whenever(repository.findActiveByStatus(InquiryStatus.PENDING))
             .thenReturn(emptyList())
         whenever(repository.save(any())).thenAnswer { it.getArgument<Inquiry>(0) }
 
@@ -87,9 +87,8 @@ class InquiryServiceTest {
             InquiryCreateRequest(
                 title = "初回問い合わせ",
                 content = "内容",
-                requesterName = "田中",
-                requesterEmail = "tanaka@example.com",
-                priority = InquiryPriority.HIGH
+                customerName = "田中",
+                requesterEmail = "tanaka@example.com"
             )
         )
 
@@ -109,16 +108,14 @@ class InquiryServiceTest {
             InquiryUpdateRequest(
                 title = "更新タイトル",
                 content = "更新内容",
-                requesterName = "鈴木",
+                customerName = "鈴木",
                 requesterEmail = "suzuki@example.com",
-                status = InquiryStatus.IN_PROGRESS,
-                priority = InquiryPriority.HIGH
+                status = InquiryStatus.IN_PROGRESS
             )
         )
 
         assertThat(result.title).isEqualTo("更新タイトル")
         assertThat(result.status).isEqualTo(InquiryStatus.IN_PROGRESS)
-        assertThat(result.priority).isEqualTo(InquiryPriority.HIGH)
     }
 
     @Test
@@ -133,19 +130,32 @@ class InquiryServiceTest {
     }
 
     @Test
-    fun `delete calls deleteById when inquiry exists`() {
+    fun `softDelete sets deletedAt`() {
+        val inquiry = sampleInquiry()
+        whenever(repository.findById(1L)).thenReturn(Optional.of(inquiry))
+        whenever(repository.save(any())).thenAnswer { it.getArgument<Inquiry>(0) }
+
+        service.softDelete(1L)
+
+        val captor = argumentCaptor<Inquiry>()
+        verify(repository).save(captor.capture())
+        assertThat(captor.firstValue.deletedAt).isNotNull()
+    }
+
+    @Test
+    fun `hardDelete succeeds with correct password`() {
         whenever(repository.existsById(1L)).thenReturn(true)
         doNothing().whenever(repository).deleteById(1L)
 
-        service.delete(1L)
+        service.hardDelete(1L, HardDeleteRequest(adminPassword))
 
         verify(repository).deleteById(1L)
     }
 
     @Test
-    fun `delete throws EntityNotFoundException when not found`() {
-        whenever(repository.existsById(99L)).thenReturn(false)
-
-        assertThrows<EntityNotFoundException> { service.delete(99L) }
+    fun `hardDelete throws 403 with wrong password`() {
+        assertThrows<ResponseStatusException> {
+            service.hardDelete(1L, HardDeleteRequest("wrong"))
+        }
     }
 }

@@ -5,15 +5,18 @@ import {
 } from "@tanstack/react-query";
 import { inquiryApi } from "@/lib/api";
 import type {
+  InquiryStatus,
   InquiryListParams,
   InquiryCreateRequest,
   InquiryUpdateRequest,
   ReorderItem,
+  HardDeleteRequest,
 } from "@/types/inquiry";
 
 const KEYS = {
   all: ["inquiries"] as const,
   list: (params: InquiryListParams) => ["inquiries", "list", params] as const,
+  history: ["inquiries", "history"] as const,
   detail: (id: number) => ["inquiries", id] as const,
 };
 
@@ -21,6 +24,14 @@ export function useInquiries(params: InquiryListParams = {}) {
   return useQuery({
     queryKey: KEYS.list(params),
     queryFn: () => inquiryApi.list(params),
+  });
+}
+
+export function useHistory() {
+  return useQuery({
+    queryKey: KEYS.history,
+    queryFn: () => inquiryApi.history(),
+    enabled: false,
   });
 }
 
@@ -52,7 +63,7 @@ export function useUpdateInquiry() {
 export function useUpdateStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
+    mutationFn: ({ id, status }: { id: number; status: InquiryStatus }) =>
       inquiryApi.updateStatus(id, status),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.all }),
   });
@@ -69,7 +80,16 @@ export function useReorder() {
 export function useDeleteInquiry() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => inquiryApi.delete(id),
+    mutationFn: (id: number) => inquiryApi.softDelete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.all }),
+  });
+}
+
+export function useHardDeleteInquiry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: HardDeleteRequest }) =>
+      inquiryApi.hardDelete(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.history }),
   });
 }
