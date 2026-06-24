@@ -1,0 +1,12 @@
+# このファイルをコピーして terraform.tfvars にリネームし、実際の値を入力してください
+# terraform.tfvars は .gitignore に追加済みのためGitにはコミットされません
+
+aws_region    = "ap-northeast-1"
+app_name      = "inquiry"
+
+# AWSに登録したキーペア名（.pemファイルの名前から拡張子を除いたもの）
+key_pair_name = "inquiry-key"
+
+# 自分のグローバルIPアドレス（末尾に /32 をつける）
+# 確認方法: curl https://checkip.amazonaws.com
+my_ip = "XXX.XXX.XXX.XXX/32"
