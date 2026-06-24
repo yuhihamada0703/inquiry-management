@@ -32,8 +32,8 @@ graph TB
 | コンポーネント | 役割 | 技術 |
 |-------------|------|------|
 | Nginx | リバースプロキシ。`/api/*` をバックエンドへ、それ以外をフロントエンドへルーティング | Nginx 1.24.x |
-| Next.js | カンバンボードUI。SSR + クライアントサイドフェッチ (TanStack Query) | Next.js 14 / TypeScript |
-| Spring Boot | REST API サーバー。ビジネスロジック・バリデーション・DB アクセスを担当 | Kotlin / Spring Boot 3.2 |
+| Next.js | カンバンボードUI。SSR + クライアントサイドフェッチ (TanStack Query) | Next.js 15 / TypeScript |
+| Spring Boot | REST API サーバー。ビジネスロジック・バリデーション・DB アクセスを担当 | Kotlin / Spring Boot 4.x |
 | MySQL | 問い合わせデータの永続化。Flyway でスキーマ管理 | MySQL 8.0 (AWS RDS) |
 
 ## ローカル開発環境との差異

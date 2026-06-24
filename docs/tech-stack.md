@@ -18,13 +18,13 @@
 
 | 技術 | バージョン | 用途 |
 |------|-----------|------|
-| Kotlin | 1.9.x | メイン言語 |
-| Spring Boot | 3.2.x | フレームワーク |
+| Kotlin | 2.x | メイン言語 |
+| Spring Boot | 4.x | フレームワーク |
 | Spring Data JPA | - | ORM |
 | Spring Web MVC | - | REST API |
 | Spring Validation | - | バリデーション |
 | MySQL Connector | 8.x | DBドライバ |
-| Flyway | 9.x | DBマイグレーション |
+| Flyway | 10.x | DBマイグレーション |
 
 ## データベース
 

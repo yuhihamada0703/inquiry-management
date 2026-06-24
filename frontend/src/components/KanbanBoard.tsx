@@ -40,14 +40,17 @@ function applySort(items: Inquiry[], sort: SortKey): Inquiry[] {
           b.customerNameKana || b.customerName || "",
           "ja"
         );
+      case "assigneeName":
+        return (a.assigneeNameKana || a.assigneeName || "").localeCompare(
+          b.assigneeNameKana || b.assigneeName || "",
+          "ja"
+        );
       case "dueDate": {
-        // 期限なしは末尾
         const ad = a.dueDate ?? "9999-99-99";
         const bd = b.dueDate ?? "9999-99-99";
         return ad.localeCompare(bd);
       }
       case "createdAt":
-        // 新しい順
         return b.createdAt.localeCompare(a.createdAt);
     }
   });

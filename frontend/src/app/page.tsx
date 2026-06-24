@@ -18,7 +18,7 @@ import HistoryDialog from "@/components/HistoryDialog";
 import { useInquiries } from "@/hooks/useInquiries";
 import type { Inquiry } from "@/types/inquiry";
 
-export type SortKey = "dueDate" | "createdAt" | "customerName";
+export type SortKey = "dueDate" | "createdAt" | "customerName" | "assigneeName";
 
 export default function HomePage() {
   const [keyword, setKeyword] = useState("");
@@ -77,6 +77,7 @@ export default function HomePage() {
                 <SelectItem value="dueDate">対応期限順</SelectItem>
                 <SelectItem value="createdAt">作成日時順</SelectItem>
                 <SelectItem value="customerName">顧客名順</SelectItem>
+                <SelectItem value="assigneeName">担当者順</SelectItem>
               </SelectContent>
             </Select>
             {sort && (

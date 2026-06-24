@@ -74,6 +74,8 @@
 | dueDate | due_date |
 | createdAt | created_at |
 
+> **実装注記**: フロントエンドのカンバンビューではクライアントサイドソートを採用している（`customerNameKana` / `assigneeNameKana` / `dueDate` / `createdAt` の各フィールドで `Array.sort` を実施）。バックエンド API のソートクエリパラメータはカンバン以外（将来のリスト表示等）での利用を想定している。
+
 ---
 
 ## 画面フロー

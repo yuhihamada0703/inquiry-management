@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { inquiryApi } from "@/lib/api";
 import type {
+  InquiryStatus,
   InquiryListParams,
   InquiryCreateRequest,
   InquiryUpdateRequest,
@@ -62,7 +63,7 @@ export function useUpdateInquiry() {
 export function useUpdateStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
+    mutationFn: ({ id, status }: { id: number; status: InquiryStatus }) =>
       inquiryApi.updateStatus(id, status),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.all }),
   });

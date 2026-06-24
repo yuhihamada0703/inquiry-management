@@ -3,34 +3,36 @@ package com.example.inquiry.presentation.controller
 import com.example.inquiry.application.dto.*
 import com.example.inquiry.application.service.InquiryService
 import com.example.inquiry.domain.entity.InquiryStatus
-import com.example.inquiry.presentation.advice.GlobalExceptionHandler
 import jakarta.persistence.EntityNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.Mock
-import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
-import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.web.context.WebApplicationContext
 import java.time.LocalDateTime
 
-@ExtendWith(MockitoExtension::class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@ActiveProfiles("test")
 class InquiryControllerTest {
 
-    @Mock private lateinit var service: InquiryService
+    @Autowired private lateinit var webApplicationContext: WebApplicationContext
+
+    @MockitoBean private lateinit var service: InquiryService
+
     private lateinit var mockMvc: MockMvc
 
     @BeforeEach
     fun setUp() {
         mockMvc = MockMvcBuilders
-            .standaloneSetup(InquiryController(service))
-            .setControllerAdvice(GlobalExceptionHandler())
-            .setMessageConverters(JacksonJsonHttpMessageConverter())
+            .webAppContextSetup(webApplicationContext)
             .build()
     }
 
@@ -40,7 +42,9 @@ class InquiryControllerTest {
         content = "テスト内容",
         memo = null,
         customerName = "山田太郎",
+        customerNameKana = null,
         assigneeName = "田中担当",
+        assigneeNameKana = null,
         requesterEmail = "yamada@example.com",
         status = InquiryStatus.PENDING,
         dueDate = null,
@@ -102,6 +106,7 @@ class InquiryControllerTest {
                         "title": "新規問い合わせ",
                         "content": "お問い合わせ内容",
                         "customerName": "山田太郎",
+                        "assigneeName": "",
                         "requesterEmail": "yamada@example.com"
                     }
                     """.trimIndent()
@@ -122,6 +127,7 @@ class InquiryControllerTest {
                         "title": "",
                         "content": "内容",
                         "customerName": "山田",
+                        "assigneeName": "",
                         "requesterEmail": "yamada@example.com"
                     }
                     """.trimIndent()
@@ -141,6 +147,7 @@ class InquiryControllerTest {
                         "title": "タイトル",
                         "content": "内容",
                         "customerName": "山田",
+                        "assigneeName": "",
                         "requesterEmail": "not-an-email"
                     }
                     """.trimIndent()

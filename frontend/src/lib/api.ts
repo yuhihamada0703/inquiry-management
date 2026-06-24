@@ -38,7 +38,7 @@ export const inquiryApi = {
     return api.put(`/api/inquiries/${id}`, data).then((r) => r.data);
   },
 
-  updateStatus(id: number, status: string): Promise<Inquiry> {
+  updateStatus(id: number, status: InquiryStatus): Promise<Inquiry> {
     return api.patch(`/api/inquiries/${id}/status`, { status }).then((r) => r.data);
   },
 
