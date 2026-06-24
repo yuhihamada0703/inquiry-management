@@ -1,6 +1,7 @@
 import axios from "axios";
 import type {
   Inquiry,
+  InquiryStatus,
   InquiryCreateRequest,
   InquiryUpdateRequest,
   InquiryListParams,
