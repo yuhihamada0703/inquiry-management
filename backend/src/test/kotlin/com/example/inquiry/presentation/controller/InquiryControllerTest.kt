@@ -2,7 +2,6 @@ package com.example.inquiry.presentation.controller
 
 import com.example.inquiry.application.dto.*
 import com.example.inquiry.application.service.InquiryService
-import com.example.inquiry.domain.entity.InquiryPriority
 import com.example.inquiry.domain.entity.InquiryStatus
 import com.example.inquiry.presentation.advice.GlobalExceptionHandler
 import jakarta.persistence.EntityNotFoundException
@@ -39,14 +38,16 @@ class InquiryControllerTest {
         id = 1L,
         title = "テスト問い合わせ",
         content = "テスト内容",
-        requesterName = "山田太郎",
+        memo = null,
+        customerName = "山田太郎",
+        assigneeName = "田中担当",
         requesterEmail = "yamada@example.com",
         status = InquiryStatus.PENDING,
-        priority = InquiryPriority.MEDIUM,
         dueDate = null,
         displayOrder = 0,
         createdAt = LocalDateTime.of(2026, 1, 1, 0, 0),
-        updatedAt = LocalDateTime.of(2026, 1, 1, 0, 0)
+        updatedAt = LocalDateTime.of(2026, 1, 1, 0, 0),
+        deletedAt = null
     )
 
     private fun samplePageResponse() = PageResponse(
@@ -59,7 +60,7 @@ class InquiryControllerTest {
 
     @Test
     fun `GET inquiries returns 200 with page response`() {
-        whenever(service.findAll(null, null, null, "createdAt", "desc", 0, 20))
+        whenever(service.findAll(null, null, "createdAt", "desc", 0, 20))
             .thenReturn(samplePageResponse())
 
         mockMvc.perform(get("/api/inquiries"))
@@ -100,9 +101,8 @@ class InquiryControllerTest {
                     {
                         "title": "新規問い合わせ",
                         "content": "お問い合わせ内容",
-                        "requesterName": "山田太郎",
-                        "requesterEmail": "yamada@example.com",
-                        "priority": "MEDIUM"
+                        "customerName": "山田太郎",
+                        "requesterEmail": "yamada@example.com"
                     }
                     """.trimIndent()
                 )
@@ -121,9 +121,8 @@ class InquiryControllerTest {
                     {
                         "title": "",
                         "content": "内容",
-                        "requesterName": "山田",
-                        "requesterEmail": "yamada@example.com",
-                        "priority": "MEDIUM"
+                        "customerName": "山田",
+                        "requesterEmail": "yamada@example.com"
                     }
                     """.trimIndent()
                 )
@@ -141,9 +140,8 @@ class InquiryControllerTest {
                     {
                         "title": "タイトル",
                         "content": "内容",
-                        "requesterName": "山田",
-                        "requesterEmail": "not-an-email",
-                        "priority": "MEDIUM"
+                        "customerName": "山田",
+                        "requesterEmail": "not-an-email"
                     }
                     """.trimIndent()
                 )
@@ -166,7 +164,7 @@ class InquiryControllerTest {
 
     @Test
     fun `DELETE inquiry returns 204`() {
-        doNothing().whenever(service).delete(1L)
+        doNothing().whenever(service).softDelete(1L)
 
         mockMvc.perform(delete("/api/inquiries/1"))
             .andExpect(status().isNoContent)

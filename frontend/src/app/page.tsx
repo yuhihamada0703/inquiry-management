@@ -14,22 +14,20 @@ import KanbanBoard from "@/components/KanbanBoard";
 import InquiryDetailDialog from "@/components/InquiryDetailDialog";
 import InquiryFormModal from "@/components/InquiryFormModal";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
+import HistoryDialog from "@/components/HistoryDialog";
 import { useInquiries } from "@/hooks/useInquiries";
 import type { Inquiry } from "@/types/inquiry";
 
-type SortKey = "createdAt" | "priority" | "dueDate";
+export type SortKey = "dueDate" | "createdAt" | "customerName";
 
 export default function HomePage() {
   const [keyword, setKeyword] = useState("");
-  const [sort, setSort] = useState<SortKey>("createdAt");
-  const [direction, setDirection] = useState<"asc" | "desc">("desc");
+  const [sort, setSort] = useState<SortKey | null>(null);
 
   const deferredKeyword = useDeferredValue(keyword);
 
   const { data, isLoading, isError } = useInquiries({
     keyword: deferredKeyword || undefined,
-    sort,
-    direction,
     size: 200,
   });
 
@@ -37,6 +35,7 @@ export default function HomePage() {
   const [editInquiry, setEditInquiry] = useState<Inquiry | null>(null);
   const [deleteInquiry, setDeleteInquiry] = useState<Inquiry | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   function handleCardClick(inquiry: Inquiry) {
     setDetailInquiry(inquiry);
@@ -67,25 +66,32 @@ export default function HomePage() {
             />
           </div>
           <div className="flex items-center gap-2 ml-auto">
-            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-              <SelectTrigger className="h-8 text-xs w-32">
-                <SelectValue />
+            <Select
+              value={sort ?? ""}
+              onValueChange={(v) => setSort((v as SortKey) || null)}
+            >
+              <SelectTrigger className="h-8 text-xs w-36">
+                <SelectValue placeholder="並び替え" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="createdAt">作成日時</SelectItem>
-                <SelectItem value="priority">優先度</SelectItem>
-                <SelectItem value="dueDate">対応期限</SelectItem>
+                <SelectItem value="dueDate">対応期限順</SelectItem>
+                <SelectItem value="createdAt">作成日時順</SelectItem>
+                <SelectItem value="customerName">顧客名順</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={direction} onValueChange={(v) => setDirection(v as "asc" | "desc")}>
-              <SelectTrigger className="h-8 text-xs w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="desc">降順</SelectItem>
-                <SelectItem value="asc">昇順</SelectItem>
-              </SelectContent>
-            </Select>
+            {sort && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSort(null)}
+                className="text-xs gap-1"
+              >
+                手動順に戻る ×
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={() => setShowHistory(true)}>
+              履歴
+            </Button>
             <Button size="sm" onClick={() => setShowCreate(true)}>
               + 新規登録
             </Button>
@@ -107,6 +113,7 @@ export default function HomePage() {
           <KanbanBoard
             inquiries={data.content}
             onCardClick={handleCardClick}
+            sort={sort}
           />
         )}
       </main>
@@ -130,6 +137,10 @@ export default function HomePage() {
       <DeleteConfirmDialog
         inquiry={deleteInquiry}
         onClose={() => setDeleteInquiry(null)}
+      />
+      <HistoryDialog
+        open={showHistory}
+        onClose={() => setShowHistory(false)}
       />
     </div>
   );

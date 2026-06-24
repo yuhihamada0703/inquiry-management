@@ -25,18 +25,20 @@ const baseInquiry: Inquiry = {
   id: 1,
   title: 'テスト問い合わせ',
   content: 'テスト内容です',
-  requesterName: '山田太郎',
+  memo: null,
+  customerName: '山田太郎',
+  assigneeName: '田中担当',
   requesterEmail: 'yamada@example.com',
   status: 'PENDING',
-  priority: 'HIGH',
   dueDate: null,
   displayOrder: 0,
   createdAt: '2026-01-01T00:00:00',
   updatedAt: '2026-01-01T00:00:00',
+  deletedAt: null,
 }
 
 describe('InquiryCard', () => {
-  it('renders title and requester name', () => {
+  it('renders title and customer name', () => {
     render(<InquiryCard inquiry={baseInquiry} onClick={jest.fn()} />)
 
     expect(screen.getByText('テスト問い合わせ')).toBeInTheDocument()
@@ -49,17 +51,17 @@ describe('InquiryCard', () => {
     expect(screen.getByText('テスト内容です')).toBeInTheDocument()
   })
 
-  it('renders priority badge with correct label', () => {
+  it('renders assignee name when provided', () => {
     render(<InquiryCard inquiry={baseInquiry} onClick={jest.fn()} />)
 
-    expect(screen.getByText('高')).toBeInTheDocument()
+    expect(screen.getByText('田中担当')).toBeInTheDocument()
   })
 
-  it('renders medium priority label', () => {
-    const mediumInquiry = { ...baseInquiry, priority: 'MEDIUM' as const }
-    render(<InquiryCard inquiry={mediumInquiry} onClick={jest.fn()} />)
+  it('does not render assignee when empty', () => {
+    const noAssignee = { ...baseInquiry, assigneeName: '' }
+    render(<InquiryCard inquiry={noAssignee} onClick={jest.fn()} />)
 
-    expect(screen.getByText('中')).toBeInTheDocument()
+    expect(screen.queryByText('田中担当')).not.toBeInTheDocument()
   })
 
   it('calls onClick when card is clicked', () => {

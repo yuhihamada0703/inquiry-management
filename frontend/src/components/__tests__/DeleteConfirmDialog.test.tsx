@@ -15,14 +15,16 @@ const sampleInquiry: Inquiry = {
   id: 1,
   title: '削除テスト問い合わせ',
   content: '内容',
-  requesterName: '山田',
+  memo: null,
+  customerName: '山田',
+  assigneeName: '',
   requesterEmail: 'yamada@example.com',
   status: 'PENDING',
-  priority: 'MEDIUM',
   dueDate: null,
   displayOrder: 0,
   createdAt: '2026-01-01T00:00:00',
   updatedAt: '2026-01-01T00:00:00',
+  deletedAt: null,
 }
 
 describe('DeleteConfirmDialog', () => {
@@ -33,14 +35,14 @@ describe('DeleteConfirmDialog', () => {
   it('shows the dialog with inquiry title when inquiry is provided', () => {
     render(<DeleteConfirmDialog inquiry={sampleInquiry} onClose={jest.fn()} />)
 
-    expect(screen.getByText('問い合わせを削除')).toBeInTheDocument()
+    expect(screen.getByText('問い合わせを履歴へ移動')).toBeInTheDocument()
     expect(screen.getByText(/削除テスト問い合わせ/)).toBeInTheDocument()
   })
 
   it('does not render dialog content when inquiry is null', () => {
     render(<DeleteConfirmDialog inquiry={null} onClose={jest.fn()} />)
 
-    expect(screen.queryByText('問い合わせを削除')).not.toBeInTheDocument()
+    expect(screen.queryByText('問い合わせを履歴へ移動')).not.toBeInTheDocument()
   })
 
   it('calls onClose when cancel button is clicked', () => {
@@ -52,12 +54,12 @@ describe('DeleteConfirmDialog', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
-  it('calls mutateAsync with inquiry id when delete button is clicked', async () => {
+  it('calls mutateAsync with inquiry id when move-to-history button is clicked', async () => {
     mockMutateAsync.mockResolvedValue(undefined)
     const onClose = jest.fn()
     render(<DeleteConfirmDialog inquiry={sampleInquiry} onClose={onClose} />)
 
-    fireEvent.click(screen.getByText('削除'))
+    fireEvent.click(screen.getByText('履歴へ移動'))
 
     await waitFor(() => {
       expect(mockMutateAsync).toHaveBeenCalledWith(1)
@@ -65,9 +67,9 @@ describe('DeleteConfirmDialog', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
-  it('shows deletion warning message', () => {
+  it('shows history move info message', () => {
     render(<DeleteConfirmDialog inquiry={sampleInquiry} onClose={jest.fn()} />)
 
-    expect(screen.getByText(/この操作は取り消せません/)).toBeInTheDocument()
+    expect(screen.getByText(/履歴に移動しますか/)).toBeInTheDocument()
   })
 })
