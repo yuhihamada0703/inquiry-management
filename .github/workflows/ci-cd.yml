@@ -189,19 +189,18 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # jq で JSON を安全に組み立て（トークン内の特殊文字をエスケープ）
+          # sudo -H -u ec2-user で実行: HOME が設定されるため git/docker が正常動作
           COMMANDS=$(jq -cn \
             --arg token "$GHCR_TOKEN" \
             --arg actor "$GHCR_ACTOR" \
             --arg backend "$BACKEND_IMAGE" \
             --arg frontend "$FRONTEND_IMAGE" \
             '[
-              ("echo " + $token + " | docker login ghcr.io -u " + $actor + " --password-stdin"),
-              ("docker pull " + $backend + ":latest"),
-              ("docker pull " + $frontend + ":latest"),
-              "git config --global --add safe.directory /home/ec2-user/inquiry-management",
-              "cd /home/ec2-user/inquiry-management && git fetch origin && git checkout main && git pull origin main",
-              "mkdir -p /root/.docker/cli-plugins && ln -sf /usr/local/bin/docker-compose /root/.docker/cli-plugins/docker-compose",
-              ("cd /home/ec2-user/inquiry-management && BACKEND_IMAGE=" + $backend + " FRONTEND_IMAGE=" + $frontend + " docker compose up -d --no-deps --pull always backend frontend"),
+              ("echo " + $token + " | sudo -H -u ec2-user docker login ghcr.io -u " + $actor + " --password-stdin"),
+              ("sudo -H -u ec2-user docker pull " + $backend + ":latest"),
+              ("sudo -H -u ec2-user docker pull " + $frontend + ":latest"),
+              "sudo -H -u ec2-user bash -c \"cd ~/inquiry-management && git fetch origin && git checkout main && git pull origin main\"",
+              ("sudo -H -u ec2-user bash -c \"cd ~/inquiry-management && BACKEND_IMAGE=" + $backend + " FRONTEND_IMAGE=" + $frontend + " docker compose up -d --no-deps --pull always backend frontend\""),
               "docker image prune -f"
             ]')
 
