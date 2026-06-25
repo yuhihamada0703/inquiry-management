@@ -1,5 +1,7 @@
 # Claude Code
 .claude/
+!.claude/skills/
+!.claude/skills/**
 
 # macOS
 .DS_Store
