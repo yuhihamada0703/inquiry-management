@@ -47,7 +47,7 @@ resource "aws_security_group" "ec2" {
   description = "Security group for EC2 instance"
   vpc_id      = aws_vpc.main.id
 
-  # SSH: 自分のIPのみ許可（セキュリティのため全公開しない）
+  # SSH: 自分のIPのみ許可（CI/CD は SSM Run Command を使用するため不要）
   ingress {
     description = "SSH from my IP"
     from_port   = 22
@@ -120,6 +120,7 @@ resource "aws_instance" "main" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.ec2.id]
   key_name               = var.key_pair_name
+  iam_instance_profile   = aws_iam_instance_profile.ec2_ssm.name
 
   root_block_device {
     volume_type = "gp2"
