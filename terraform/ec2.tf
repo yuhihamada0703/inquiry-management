@@ -56,31 +56,31 @@ resource "aws_security_group" "ec2" {
     cidr_blocks = [var.my_ip]
   }
 
-  # HTTP: フロントエンド（Next.js）
+  # HTTP: フロントエンド（Next.js）- 自分のIPのみ
   ingress {
-    description = "HTTP"
+    description = "HTTP from my IP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.my_ip]
   }
 
-  # バックエンドAPI（Spring Boot）
+  # バックエンドAPI（Spring Boot）- 自分のIPのみ
   ingress {
-    description = "Backend API"
+    description = "Backend API from my IP"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.my_ip]
   }
 
-  # フロントエンド直アクセス確認用（Next.js dev/start）
+  # フロントエンド（Next.js）- 自分のIPのみ
   ingress {
-    description = "Frontend Next.js"
+    description = "Frontend Next.js from my IP"
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.my_ip]
   }
 
   egress {
