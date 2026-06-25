@@ -46,16 +46,22 @@ resource "aws_iam_user_policy" "github_actions_ssm" {
     Version = "2012-10-17"
     Statement = [
       {
+        # SendCommand: 対象インスタンスとドキュメントのみ許可
         Effect = "Allow"
-        Action = [
-          "ssm:SendCommand",
-          "ssm:GetCommandInvocation",
-          "ssm:ListCommandInvocations"
-        ]
+        Action = ["ssm:SendCommand"]
         Resource = [
           "arn:aws:ssm:${var.aws_region}:*:document/AWS-RunShellScript",
           aws_instance.main.arn
         ]
+      },
+      {
+        # GetCommandInvocation / ListCommandInvocations はリソース指定が不可（*必須）
+        Effect = "Allow"
+        Action = [
+          "ssm:GetCommandInvocation",
+          "ssm:ListCommandInvocations"
+        ]
+        Resource = "*"
       }
     ]
   })
