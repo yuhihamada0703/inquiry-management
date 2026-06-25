@@ -188,32 +188,58 @@ jobs:
           GHCR_ACTOR: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # jq で JSON を安全に組み立て（トークン内の特殊文字をエスケープ）
+          COMMANDS=$(jq -cn \
+            --arg token "$GHCR_TOKEN" \
+            --arg actor "$GHCR_ACTOR" \
+            --arg backend "$BACKEND_IMAGE" \
+            --arg frontend "$FRONTEND_IMAGE" \
+            '[
+              ("echo " + $token + " | docker login ghcr.io -u " + $actor + " --password-stdin"),
+              ("docker pull " + $backend + ":latest"),
+              ("docker pull " + $frontend + ":latest"),
+              "git config --global --add safe.directory /home/ec2-user/inquiry-management",
+              "cd /home/ec2-user/inquiry-management && git fetch origin && git checkout main && git pull origin main",
+              "mkdir -p /root/.docker/cli-plugins && ln -sf /usr/local/bin/docker-compose /root/.docker/cli-plugins/docker-compose",
+              ("cd /home/ec2-user/inquiry-management && BACKEND_IMAGE=" + $backend + " FRONTEND_IMAGE=" + $frontend + " docker compose up -d --no-deps --pull always backend frontend"),
+              "docker image prune -f"
+            ]')
+
           COMMAND_ID=$(aws ssm send-command \
             --region ap-northeast-1 \
             --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
             --document-name "AWS-RunShellScript" \
-            --parameters "commands=[
-              \"echo '$GHCR_TOKEN' | docker login ghcr.io -u '$GHCR_ACTOR' --password-stdin\",
-              \"docker pull '$BACKEND_IMAGE:latest'\",
-              \"docker pull '$FRONTEND_IMAGE:latest'\",
-              \"cd /home/ec2-user/inquiry-management && git fetch origin && git checkout main && git pull origin main\",
-              \"cd /home/ec2-user/inquiry-management && BACKEND_IMAGE='$BACKEND_IMAGE' FRONTEND_IMAGE='$FRONTEND_IMAGE' docker compose up -d --no-deps --pull always backend frontend\",
-              \"docker image prune -f\"
-            ]" \
+            --parameters "commands=$COMMANDS" \
             --query "Command.CommandId" \
             --output text)
           echo "SSM Command ID: $COMMAND_ID"
 
-          # コマンド完了まで待機
-          aws ssm wait command-executed \
-            --region ap-northeast-1 \
-            --command-id "$COMMAND_ID" \
-            --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
-
-          # 実行ログを表示
-          aws ssm get-command-invocation \
-            --region ap-northeast-1 \
-            --command-id "$COMMAND_ID" \
-            --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
-            --query "StandardOutputContent" \
-            --output text
+          # aws ssm wait は使わず手動ポーリング（最大10分）
+          for i in $(seq 1 60); do
+            sleep 10
+            STATUS=$(aws ssm get-command-invocation \
+              --region ap-northeast-1 \
+              --command-id "$COMMAND_ID" \
+              --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+              --query "StatusDetails" --output text 2>/dev/null || echo "Pending")
+            echo "[$i/60] Status: $STATUS"
+            if [ "$STATUS" = "Success" ]; then
+              echo "Deploy succeeded!"
+              aws ssm get-command-invocation \
+                --region ap-northeast-1 \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+                --query "StandardOutputContent" --output text
+              exit 0
+            elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ] || [ "$STATUS" = "TimedOut" ]; then
+              echo "Deploy failed: $STATUS"
+              aws ssm get-command-invocation \
+                --region ap-northeast-1 \
+                --command-id "$COMMAND_ID" \
+                --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+                --query "[StandardOutputContent, StandardErrorContent]" --output json
+              exit 1
+            fi
+          done
+          echo "Timeout waiting for deploy"
+          exit 1
