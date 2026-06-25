@@ -10,3 +10,9 @@ key_pair_name = "inquiry-key"
 # 自分のグローバルIPアドレス（末尾に /32 をつける）
 # 確認方法: curl https://checkip.amazonaws.com
 my_ip = "XXX.XXX.XXX.XXX/32"
+
+# ─── RDS 設定 ───────────────────────────────
+db_name     = "inquiry_db"
+db_username = "admin"
+# 強力なパスワードを設定すること（英大小文字・数字・記号を含む12文字以上推奨）
+db_password = "CHANGE_ME_STRONG_PASSWORD"
