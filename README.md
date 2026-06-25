@@ -145,6 +145,55 @@ npm run dev
 |--------|-----------|------|
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8080` | バックエンド API の URL |
 
+## 本番環境（AWS）
+
+### インフラ構成概要
+
+AWS 東京リージョン（ap-northeast-1）に構築。詳細は [システムアーキテクチャ](docs/architecture.md) を参照。
+
+| コンポーネント | 構成 |
+|-------------|------|
+| EC2 | t3.micro / Amazon Linux 2023 / Docker + Docker Compose |
+| RDS | MySQL 8.0 / db.t3.micro / プライベートサブネット |
+| Nginx | EC2 上で稼働。`/api/*` → Spring Boot、その他 → Next.js へルーティング |
+| Elastic IP | EC2 に固定 IP を割り当て |
+
+インフラリソースは `terraform/` ディレクトリで管理（Terraform）。
+
+### デプロイ方法
+
+`main` ブランチへの push で GitHub Actions が自動実行し、AWS SSM Run Command 経由で EC2 へデプロイ。
+
+```
+push to main
+  → テスト（Backend / Frontend）
+  → Docker イメージビルド & GHCR へ push
+  → SSM Run Command で EC2 上の docker compose を更新
+```
+
+### GitHub Secrets（デプロイに必要な設定）
+
+| Secret 名 | 説明 |
+|-----------|------|
+| `AWS_ACCESS_KEY_ID` | GitHub Actions 用 IAM アクセスキー |
+| `AWS_SECRET_ACCESS_KEY` | GitHub Actions 用 IAM シークレットキー |
+| `EC2_INSTANCE_ID` | デプロイ先 EC2 インスタンス ID |
+| `NEXT_PUBLIC_API_URL` | 本番 API ベース URL（例: `http://<EC2-IP>`） |
+
+### 本番環境変数（EC2 上での設定）
+
+バックエンドコンテナには以下の環境変数を設定：
+
+| 変数名 | 説明 |
+|--------|------|
+| `DB_HOST` | RDS エンドポイント |
+| `DB_PORT` | DB ポート番号（通常 3306） |
+| `DB_NAME` | データベース名 |
+| `DB_USER` | DB ユーザー名 |
+| `DB_PASSWORD` | DB パスワード |
+| `ADMIN_PASSWORD` | 完全削除用管理者パスワード |
+| `CORS_ALLOWED_ORIGINS` | 本番フロントエンド URL |
+
 ## ライセンス
 
 [MIT License](LICENSE)

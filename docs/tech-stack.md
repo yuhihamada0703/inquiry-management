@@ -19,7 +19,7 @@
 | 技術 | バージョン | 用途 |
 |------|-----------|------|
 | Kotlin | 2.x | メイン言語 |
-| Spring Boot | 4.x | フレームワーク |
+| Spring Boot | 3.2 | フレームワーク |
 | Spring Data JPA | - | ORM |
 | Spring Web MVC | - | REST API |
 | Spring Validation | - | バリデーション |
@@ -36,10 +36,13 @@
 
 | 技術 | バージョン | 用途 |
 |------|-----------|------|
-| AWS EC2 | - | アプリサーバー |
-| AWS RDS | MySQL 8.0 | マネージドDB |
-| Nginx | 1.24.x | リバースプロキシ |
-| Terraform | 1.7.x | インフラ as Code |
+| AWS EC2 | t3.micro | アプリサーバー（Docker + Docker Compose で全サービスを稼働） |
+| AWS RDS | MySQL 8.0 / db.t3.micro | マネージド DB（プライベートサブネット配置・EC2 からのみ接続可） |
+| AWS VPC | - | 専用ネットワーク（パブリック + プライベートサブネット） |
+| AWS SSM | - | CI/CD デプロイコマンドの安全な実行（SSH 不要） |
+| AWS IAM | - | EC2 インスタンスロール + GitHub Actions 用最小権限ユーザー |
+| Nginx | - | リバースプロキシ（`/api/*` → Spring Boot、その他 → Next.js） |
+| Terraform | >= 1.5.0 | インフラ as Code（terraform/ ディレクトリで管理） |
 
 ## 開発環境
 
@@ -54,13 +57,14 @@
 | ツール | 用途 |
 |--------|------|
 | GitHub Actions | PR・push 時にテスト・ビルド・デプロイを自動化 |
-| GHCR (GitHub Container Registry) | バックエンド Docker イメージの保管 |
+| GHCR (GitHub Container Registry) | バックエンド・フロントエンド Docker イメージの保管 |
 
 ### パイプライン概要
 
 | ジョブ | トリガー | 内容 |
 |-------|---------|------|
 | Backend Test | PR / push | Gradle テスト（H2 インメモリ DB） |
-| Frontend Test & Build | PR / push | ESLint + Jest + Next.js ビルド確認 |
-| Build & Push | main push のみ | Docker イメージビルド → GHCR へ push |
-| Deploy to Production | main push のみ | SSH で EC2 へデプロイ（docker compose 更新） |
+| Frontend Test & Build | PR / push | ESLint + Next.js ビルド確認 |
+| Build & Push Backend | main push のみ | Docker イメージビルド → GHCR へ push |
+| Build & Push Frontend | main push のみ | Docker イメージビルド → GHCR へ push |
+| Deploy to Production | main push のみ | AWS SSM Run Command 経由で EC2 に docker compose 更新 |
